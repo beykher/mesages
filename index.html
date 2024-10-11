@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -7,123 +7,110 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
-<div class="chat-container">
-    <h2>Mensajes</h2>
-    <div class="messages" id="messageBox">
-        <!-- Los mensajes aparecerán aquí -->
+    <div class="chat-container">
+        <h2>Mensajes</h2>
+        <div class="messages" id="messageBox">
+            <!-- Los mensajes aparecerán aquí -->
+        </div>
+        <div class="input-area">
+            <input type="text" id="newMessageInput" placeholder="Escribe un nuevo mensaje...">
+            <button id="sendButton">Enviar</button>
+        </div>
+        <div class="button-container">
+            <button id="backButton">Volver a index-2.html</button>
+            <button id="clearButton">Borrar todos los mensajes</button>
+        </div>
     </div>
-    <div class="input-area">
-        <input type="text" id="newMessageInput" placeholder="Escribe un nuevo mensaje...">
-        <button id="sendButton">Enviar</button>
-    </div>
-    <div class="button-container">
-        <button id="backButton">Volver a 1</button>
-        <button id="clearButton">Borrar todos los mensajes</button>
-    </div>
-</div>
 
-<script>
-    const messageBox = document.getElementById("messageBox");
-    const newMessageInput = document.getElementById("newMessageInput");
-    const sendButton = document.getElementById("sendButton");
-    const backButton = document.getElementById("backButton");
-    const clearButton = document.getElementById("clearButton");
+    <!-- Script de Firebase y funcionalidad -->
+    <script type="module">
+        // Importar SDKs de Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
-    function loadMessages() {
-        const messages = JSON.parse(localStorage.getItem('messages')) || [];
-        messageBox.innerHTML = ''; // Limpiar mensajes anteriores
-        messages.forEach(({ text, origin }) => {
-            addMessageToChat(text, origin);
-        });
-    }
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCjOyMR9ScPxnHwwByKePuVomDtF2rcQJU",
+             authDomain: "mensager-aeac8.firebaseapp.com",
+                 projectId: "mensager-aeac8",
+                       storageBucket: "mensager-aeac8.appspot.com",
+                            messagingSenderId: "626956358953",
+                                   appId: "1:626956358953:web:646c8ee0157ccaa7b99338",
+                                                 measurementId: "G-ZEDE2726JY"
+        };
 
-    function addMessageToChat(message, origin) {
-        const messageElement = document.createElement("div");
-        messageElement.classList.add("message");
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-        if (origin === 'index') {
-            messageElement.classList.add("from-index");
-        } else if (origin === 'index-2') {
-            messageElement.classList.add("from-index-2");
-        }
+        // Elementos del DOM
+        const messageBox = document.getElementById("messageBox");
+        const newMessageInput = document.getElementById("newMessageInput");
+        const sendButton = document.getElementById("sendButton");
+        const clearButton = document.getElementById("clearButton");
 
-        messageElement.textContent = message;
-
-        // Botón de eliminar solo para mensajes de index
-        if (origin === 'index') {
-            const deleteButton = document.createElement("button");
-            deleteButton.textContent = "Eliminar";
-            deleteButton.classList.add("delete-button");
-            deleteButton.onclick = function() {
-                deleteMessage(messageElement, message);
-            };
-
-            messageElement.appendChild(deleteButton);
-        }
-
-        messageBox.appendChild(messageElement);
-        messageBox.scrollTop = messageBox.scrollHeight; // Desplazarse hacia abajo al nuevo mensaje
-    }
-
-    function saveMessage(message, origin) {
-        let messages = JSON.parse(localStorage.getItem('messages')) || [];
-        messages.push({ text: message, origin: origin });
-        localStorage.setItem('messages', JSON.stringify(messages));
-    }
-
-    function deleteMessage(messageElement, message) {
-        // Agregar la clase de animación
-        messageElement.classList.add("fade-out");
-
-        // Esperar a que la animación termine antes de eliminar el mensaje
-        messageElement.addEventListener('transitionend', () => {
-            messageElement.remove();
-            removeMessageFromStorage(message);
-        });
-    }
-
-    function removeMessageFromStorage(messageToRemove) {
-        let messages = JSON.parse(localStorage.getItem('messages')) || [];
-        messages = messages.filter(({ text }) => text !== messageToRemove);
-        localStorage.setItem('messages', JSON.stringify(messages));
-    }
-
-    function sendNewMessage() {
-        const message = newMessageInput.value.trim();
-        if (message) {
-            addMessageToChat(message, 'index');
-            saveMessage(message, 'index');
-            newMessageInput.value = '';
-        }
-    }
-
-    function clearAllMessages() {
-        if (confirm("¿Estás seguro de que quieres borrar todos los mensajes?")) {
-            localStorage.removeItem('messages');
+        // Cargar mensajes desde Firestore en tiempo real
+        const q = query(collection(db, "messages"), orderBy("timestamp", "asc"));
+        onSnapshot(q, (snapshot) => {
             messageBox.innerHTML = '';
+            snapshot.forEach(doc => {
+                const messageData = doc.data();
+                addMessageToChat(messageData.text, messageData.sender, doc.id);
+            });
+        });
+
+        // Función para agregar un mensaje al chat
+        function addMessageToChat(message, sender, messageId) {
+            const messageElement = document.createElement("div");
+            messageElement.classList.add("message");
+            messageElement.textContent = message;
+            messageElement.classList.add(sender === "index" ? "from-index" : "from-index-2");
+
+            // Botón de eliminar si el mensaje es de este usuario
+            if ((sender === "index" && window.location.pathname.includes("index.html")) || 
+                (sender === "index-2" && window.location.pathname.includes("index-2.html"))) {
+                const deleteButton = document.createElement("button");
+                deleteButton.textContent = "Eliminar";
+                deleteButton.classList.add("delete-button");
+                deleteButton.onclick = () => deleteMessage(messageId);
+                messageElement.appendChild(deleteButton);
+            }
+
+            messageBox.appendChild(messageElement);
+            messageBox.scrollTop = messageBox.scrollHeight; // Desplazar hacia el último mensaje
         }
-    }
 
-    sendButton.addEventListener('click', sendNewMessage);
-    newMessageInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            sendNewMessage();
+        // Función para enviar un nuevo mensaje
+        sendButton.addEventListener('click', async () => {
+            const message = newMessageInput.value.trim();
+            if (message) {
+                await addDoc(collection(db, "messages"), {
+                    text: message,
+                    timestamp: new Date(),
+                    sender: window.location.pathname.includes("index-2.html") ? "index-2" : "index"
+                });
+                newMessageInput.value = '';
+            }
+        });
+
+        // Función para eliminar un mensaje
+        async function deleteMessage(messageId) {
+            if (confirm("¿Estás seguro de que quieres eliminar este mensaje?")) {
+                await deleteDoc(doc(db, "messages", messageId));
+            }
         }
-    });
 
-    backButton.addEventListener('click', function() {
-        window.location.href = 'index-2.html';
-    });
-
-    clearButton.addEventListener('click', clearAllMessages);
-
-    // Cargar mensajes al iniciar
-    loadMessages();
-    
-    // Verificar nuevos mensajes cada 2 segundos
-    setInterval(loadMessages, 2000);
-</script>
-
+        // Borrar todos los mensajes
+        clearButton.addEventListener('click', async () => {
+            const q = query(collection(db, "messages"));
+            const snapshot = await getDocs(q);
+            snapshot.forEach(doc => {
+                if ((doc.data().sender === "index" && window.location.pathname.includes("index.html")) || 
+                    (doc.data().sender === "index-2" && window.location.pathname.includes("index-2.html"))) {
+                    deleteDoc(doc.ref);
+                }
+            });
+        });
+    </script>
 </body>
 </html>
