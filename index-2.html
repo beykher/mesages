@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mensajes Recibidos</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="chat-container">
+    <h2>Mensajes</h2>
+    <div class="messages" id="messageBox">
+        <!-- Los mensajes aparecerán aquí -->
+    </div>
+    <div class="input-area">
+        <input type="text" id="newMessageInput" placeholder="Escribe un nuevo mensaje...">
+        <button id="sendButton">Enviar</button>
+    </div>
+    <div class="button-container">
+        <button id="backButton">Volver a 2</button>
+        <button id="clearButton">Borrar todos los mensajes</button>
+    </div>
+</div>
+
+<script>
+    const messageBox = document.getElementById("messageBox");
+    const newMessageInput = document.getElementById("newMessageInput");
+    const sendButton = document.getElementById("sendButton");
+    const backButton = document.getElementById("backButton");
+    const clearButton = document.getElementById("clearButton");
+
+    function loadMessages() {
+        const messages = JSON.parse(localStorage.getItem('messages')) || [];
+        messageBox.innerHTML = ''; // Limpiar mensajes anteriores
+        messages.forEach(({ text, origin }) => {
+            addMessageToChat(text, origin);
+        });
+    }
+
+    function addMessageToChat(message, origin) {
+        const messageElement = document.createElement("div");
+        messageElement.classList.add("message");
+        if (origin === 'index') {
+            messageElement.classList.add("from-index");
+        } else if (origin === 'index-2') {
+            messageElement.classList.add("from-index-2");
+        }
+
+        messageElement.textContent = message;
+
+        // Botón de eliminar solo para mensajes de index-2
+        if (origin === 'index-2') {
+            const deleteButton = document.createElement("button");
+            deleteButton.textContent = "Eliminar";
+            deleteButton.classList.add("delete-button");
+            deleteButton.onclick = function() {
+                deleteMessage(messageElement, message);
+            };
+
+            messageElement.appendChild(deleteButton);
+        }
+
+        messageBox.appendChild(messageElement);
+        messageBox.scrollTop = messageBox.scrollHeight; // Desplazarse hacia abajo al nuevo mensaje
+    }
+
+    function saveMessage(message, origin) {
+        let messages = JSON.parse(localStorage.getItem('messages')) || [];
+        messages.push({ text: message, origin: origin });
+        localStorage.setItem('messages', JSON.stringify(messages));
+    }
+
+    function deleteMessage(messageElement, message) {
+        // Agregar la clase de animación
+        messageElement.classList.add("fade-out");
+
+        // Esperar a que la animación termine antes de eliminar el mensaje
+        messageElement.addEventListener('transitionend', () => {
+            messageElement.remove();
+            removeMessageFromStorage(message);
+        });
+    }
+
+    function removeMessageFromStorage(messageToRemove) {
+        let messages = JSON.parse(localStorage.getItem('messages')) || [];
+        messages = messages.filter(({ text }) => text !== messageToRemove);
+        localStorage.setItem('messages', JSON.stringify(messages));
+    }
+
+    function sendNewMessage() {
+        const message = newMessageInput.value.trim();
+        if (message) {
+            addMessageToChat(message, 'index-2');
+            saveMessage(message, 'index-2');
+            newMessageInput.value = '';
+        }
+    }
+
+    function clearAllMessages() {
+        if (confirm("¿Estás seguro de que quieres borrar todos los mensajes?")) {
+            localStorage.removeItem('messages');
+            messageBox.innerHTML = '';
+        }
+    }
+
+    sendButton.addEventListener('click', sendNewMessage);
+    newMessageInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendNewMessage();
+        }
+    });
+
+    backButton.addEventListener('click', function() {
+        window.location.href = 'index.html';
+    });
+
+    clearButton.addEventListener('click', clearAllMessages);
+
+    // Cargar mensajes al iniciar
+    loadMessages();
+    
+    // Verificar nuevos mensajes cada 2 segundos
+    setInterval(loadMessages, 2000);
+</script>
+
+</body>
+</html>

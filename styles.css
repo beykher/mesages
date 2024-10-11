@@ -1,0 +1,112 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.chat-container {
+    width: 400px;
+    background-color: white;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+h2 {
+    text-align: center;
+    margin: 0 0 15px 0;
+}
+
+.messages {
+    height: 300px; /* Altura de la caja de mensajes */
+    overflow-y: auto; /* Permitir desplazamiento */
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    background-color: #fafafa;
+    display: flex;
+    flex-direction: column; /* Alinear los mensajes en columna */
+    justify-content: flex-end; /* Asegurar que los mensajes más recientes queden al fondo */
+}
+
+.message {
+    margin-bottom: 10px;
+    padding: 8px;
+    border-radius: 5px;
+    position: relative;
+}
+
+.from-index {
+    background-color: #d1e7dd; /* Color para mensajes de index.html */
+    text-align: right; /* Alinear a la derecha */
+}
+
+.from-index-2 {
+    background-color: #f8d7da; /* Color para mensajes de index-2.html */
+    text-align: left; /* Alinear a la izquierda */
+}
+
+.delete-button {
+    margin-left: 10px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 5px 10px;
+}
+
+.input-area {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+#newMessageInput {
+    flex-grow: 1;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+#sendButton {
+    padding: 5px 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.button-container {
+    display: flex;
+    justify-content: space-between;
+}
+
+#backButton, #clearButton {
+    padding: 5px 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#clearButton {
+    background-color: #dc3545;
+}
+
+/* Animación de desvanecimiento */
+.fade-out {
+    transition: opacity 0.5s ease;
+    opacity: 0;
+}
+
+/* Evitar el scroll horizontal */
+.messages {
+    overflow-x: hidden;
+}
